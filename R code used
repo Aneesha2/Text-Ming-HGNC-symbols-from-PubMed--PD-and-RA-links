@@ -1,0 +1,126 @@
+>library('pubmed.mineR')
+# read  text_file abstracts of RA, PD (a) and (b) RA_and_PD-exported from pubmed in text format
+RA<-readabs(file="/Users/a***/Desktop/RA_pubmed_result.txt")
+PD<-readabs(file="/Users/a***/Desktop/PD_pubmed_result.txt")
+RA_and_PD<-readabs(file="/Users/a***/Desktop/RA_and_PD_pubmed_result.txt")
+
+#Extract HGNC symbols from abstracts
+RA_genes<-gene_atomization(RA)
+PD_genes<-gene_atomization(PD)
+RA_and_PD_genes<-gene_atomization(RA_and_PD)
+
+# Convert HGNC ids to Entrez IDs using DAVID conversion tool @ https://david.ncifcrf.gov/conversion2.jsp
+# Gene to GOprofile analysis
+> library('goProfiles')
+# read gene lists with Entrez IDs for RA_overlap_PD (a) and RA_and_PD (b)
+a<-read.csv(file="/Users/a***/Desktop/RA_overlap_PD.csv", header=T)
+b<-read.csv(file="/Users/a***/Desktop/RA_and_PD.csv", header=T)
+
+# Build Gene Ontology profiles(GO profiles) at levels 2 and 4
+> a.GOprofile<-basicProfile(genelist=a, onto='ANY', level=4, orgPackage="org.Hs.eg.db")
+> b.GOprofile<-basicProfile(genelist=b, onto='ANY', level=4, orgPackage="org.Hs.eg.db")
+
+# Build a GO profile for the intersecting genes at levels 2 and 4
+> comm.GOprofile<-basicProfile(intersect(a.GOprofile,b.GOPprofile), onto='ANY', level=4, orgPackage="org.Hs.eg.db")
+
+#compare RA_overlap_PD and RA_and_PD gene lists (comp for level 4 demonstrated)
+com<-compareGeneLists(a, b, orgPackage="org.Hs.eg.db", level=4)
+ MF        BP        CC
+Sqr.Euc.Dist 0.147750  2.818056  0.211375
+StdErr       0.053457  1.642318  0.112655
+pValue       0.118900  0.009100  0.573900
+0.95CI.low   0.042977 -0.400829 -0.009425
+0.95CI.up    0.252523  6.036940  0.432174
+
+# mine significantly different GO profiles 
+fisherGOProfiles(a.GOprofile$BP, b.GOprofile$BP, comm.GOprofile$BP)
+
+
+
+# Use significant GO IDS in REVIGO to construct a Treemap summary
+# A treemap R script produced by the REVIGO server at http://revigo.irb.hr/
+# If you found REVIGO useful in your work, please cite the following reference:
+# Supek F et al. "REVIGO summarizes and visualizes long lists of Gene Ontology
+# terms" PLoS ONE 2011. doi:10.1371/journal.pone.0021800
+
+# author: Anton Kratz <anton.kratz@gmail.com>, RIKEN Omics Science Center, Functional Genomics Technology Team, Japan
+# created: Fri, Nov 02, 2012  7:25:52 PM
+# last change: Fri, Nov 09, 2012  3:20:01 PM
+
+# -----------------------------------------------------------------------------
+# If you don't have the treemap package installed, uncomment the following line:
+# install.packages( "treemap" );
+library(treemap) 								# treemap package by Martijn Tennekes
+
+# Set the working directory if necessary
+# setwd("C:/Users/username/workingdir");
+
+# --------------------------------------------------------------------------
+# Here is your data from REVIGO. Scroll down for plot configuration options.
+
+revigo.names <- c("term_ID","description","freqInDbPercent","uniqueness","dispensability","representative");
+revigo.data <- rbind(c("GO:0002377","immunoglobulin production",0.917,0.897,0.000,"immunoglobulin production"),
+c("GO:0071674","mononuclear cell migration",0.456,0.844,0.196,"immunoglobulin production"),
+c("GO:0002700","regulation of production of molecular mediator of immune response",0.641,0.836,0.469,"immunoglobulin production"),
+c("GO:0009617","response to bacterium",3.156,0.950,0.000,"response to bacterium"),
+c("GO:0098542","defense response to other organism",2.874,0.945,0.329,"response to bacterium"),
+c("GO:0048285","organelle fission",3.774,0.970,0.000,"organelle fission"),
+c("GO:0070661","leukocyte proliferation",1.570,0.953,0.000,"leukocyte proliferation"),
+c("GO:0046209","nitric oxide metabolic process",0.398,0.924,0.011,"nitric oxide metabolism"),
+c("GO:0010942","positive regulation of cell death",3.606,0.893,0.027,"positive regulation of cell death"),
+c("GO:0050865","regulation of cell activation",3.174,0.875,0.276,"positive regulation of cell death"),
+c("GO:0050866","negative regulation of cell activation",0.941,0.830,0.375,"positive regulation of cell death"),
+c("GO:0050854","regulation of antigen receptor-mediated signaling pathway",0.265,0.796,0.309,"positive regulation of cell death"),
+c("GO:0050778","positive regulation of immune response",4.501,0.834,0.228,"positive regulation of cell death"),
+c("GO:1903036","positive regulation of response to wounding",0.323,0.871,0.127,"positive regulation of cell death"),
+c("GO:0002695","negative regulation of leukocyte activation",0.837,0.781,0.375,"positive regulation of cell death"),
+c("GO:0002694","regulation of leukocyte activation",2.977,0.815,0.270,"positive regulation of cell death"),
+c("GO:0043170","macromolecule metabolic process",53.306,0.971,0.047,"macromolecule metabolism"),
+c("GO:0009895","negative regulation of catabolic process",0.877,0.856,0.049,"negative regulation of catabolism"),
+c("GO:0048523","negative regulation of cellular process",24.951,0.894,0.143,"negative regulation of catabolism"),
+c("GO:0009890","negative regulation of biosynthetic process",8.546,0.862,0.209,"negative regulation of catabolism"),
+c("GO:0031324","negative regulation of cellular metabolic process",13.589,0.864,0.209,"negative regulation of catabolism"),
+c("GO:0051171","regulation of nitrogen compound metabolic process",25.470,0.897,0.112,"negative regulation of catabolism"),
+c("GO:0042634","regulation of hair cycle",0.144,0.884,0.049,"regulation of hair cycle"),
+c("GO:0031652","positive regulation of heat generation",0.058,0.812,0.204,"regulation of hair cycle"),
+c("GO:0060341","regulation of cellular localization",4.876,0.872,0.049,"regulation of cellular localization"),
+c("GO:0046888","negative regulation of hormone secretion",0.369,0.760,0.442,"regulation of cellular localization"),
+c("GO:0046883","regulation of hormone secretion",1.454,0.801,0.210,"regulation of cellular localization"),
+c("GO:0010883","regulation of lipid storage",0.242,0.840,0.210,"regulation of cellular localization"),
+c("GO:0032940","secretion by cell",8.125,0.887,0.263,"regulation of cellular localization"),
+c("GO:0009914","hormone transport",1.771,0.836,0.390,"regulation of cellular localization"),
+c("GO:0010829","negative regulation of glucose transport",0.092,0.800,0.245,"regulation of cellular localization"),
+c("GO:0046903","secretion",8.892,0.907,0.111,"regulation of cellular localization"),
+c("GO:0046483","heterocycle metabolic process",34.576,0.959,0.056,"heterocycle metabolism"),
+c("GO:0006413","translational initiation",1.108,0.923,0.099,"translational initiation"),
+c("GO:0006139","nucleobase-containing compound metabolic process",33.601,0.948,0.107,"translational initiation"),
+c("GO:0044249","cellular biosynthetic process",35.955,0.953,0.108,"translational initiation"),
+c("GO:0034641","cellular nitrogen compound metabolic process",37.432,0.949,0.099,"cellular nitrogen compound metabolism"));
+
+stuff <- data.frame(revigo.data);
+names(stuff) <- revigo.names;
+
+stuff$abslog10pvalue <- as.numeric( as.character(stuff$abslog10pvalue) );
+stuff$freqInDbPercent <- as.numeric( as.character(stuff$freqInDbPercent) );
+stuff$uniqueness <- as.numeric( as.character(stuff$uniqueness) );
+stuff$dispensability <- as.numeric( as.character(stuff$dispensability) );
+
+# by default, outputs to a PDF file
+pdf( file="revigo_treemap.pdf", width=16, height=9 ) # width and height are in inches
+
+# check the tmPlot command documentation for all possible parameters - there are a lot more
+tmPlot(
+	stuff,
+	index = c("representative","description"),
+	vSize = "abslog10pvalue",
+	type = "categorical",
+	vColor = "representative",
+	title = "REVIGO Gene Ontology treemap",
+	inflate.labels = FALSE,      # set this to TRUE for space-filling group labels - good for posters
+	lowerbound.cex.labels = 0,   # try to draw as many labels as possible (still, some small squares may not get a label)
+	bg.labels = "#CCCCCCAA",     # define background color of group labels
+												       # "#CCCCCC00" is fully transparent, "#CCCCCCAA" is semi-transparent grey, NA is opaque
+	position.legend = "none"
+)
+
+dev.off()
